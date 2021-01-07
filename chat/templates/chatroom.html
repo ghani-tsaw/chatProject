@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body >
+
+<br>
+
+
+<div class="m-auto" style="width: 300px;">
+    <form class="form-group" id="id_username_form">
+        <input type="text" id="id_username"  placeholder="Username" class="form-control" required>
+        <button class="btn btn-secondary form-control mt-1">Save username</button>
+    </form>
+<br>
+    <div class="form-group" id="id_chat_box" style="display: none;">
+        <textarea class="form-control" id="chat-text" cols="10" rows="8" disabled></textarea><br>
+        <form id="id_send_msg">
+            <input type="text" id="input" class="form-control" size="80" placeholder="type..."><br>
+            <button class="form-control btn btn-secondary">send</button>
+        </form>
+    </div>
+    
+</div>
+
+<script>
+    var username;
+    $("#id_username_form").submit(function(e) {
+        e.preventDefault();
+        username = ($("#id_username").val()).trim();
+        if(username != "") {
+            $("#id_username_form").hide();
+            $("#id_chat_box").show();
+        } else {
+            $("#id_username").val("")
+        }
+    })
+
+</script>
+
+
+
+{{ room_name|json_script:"room-name" }}
+
+<script>
+
+    const roomName = JSON.parse(document.getElementById('room-name').textContent);
+
+    const chatSocket = new WebSocket(
+        'ws://'+
+        window.location.host +
+        '/ws/chat/' +
+        roomName +
+        '/'
+    );
+
+    $("#id_send_msg").submit(function(e) {
+        e.preventDefault();
+        
+        const message = $("#input").val();
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'username': username,
+        }));
+        $("#input").val("");
+    })
+    
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        document.querySelector("#chat-text").value += (data.username + ": " +data.message + "\n")
+    }
+
+
+    $(window).on('beforeunload', function(){
+        chatSocket.close();
+    });
+
+</script>
+
+</body>
+</html>
